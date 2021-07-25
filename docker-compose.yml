@@ -1,0 +1,33 @@
+version: '3'
+services:
+  web:
+    build: .
+    command: ['bin/rails', 's', '-b', '0.0.0.0']
+    depends_on:
+      - db
+    entrypoint:
+      [
+        'prehook',
+        'dockerize -wait tcp://db:5432 -timeout 60s',
+        'rm -f /app/tmp/pids/server.pid',
+        '--'
+      ]
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/app:cached
+      - /app/vendor
+      - /app/tmp
+      - /app/log
+      - /app/.git
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: '${DATABASE_USER:-foo}'
+      POSTGRES_PASSWORD: '${DATABASE_PASS:-bar}'
+    volumes:
+      - db:/var/lib/postgresql/data:cached
+    ports:
+      - '5432:5432'
+volumes:
+  db:
